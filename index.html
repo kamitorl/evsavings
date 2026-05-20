@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Calculadora cambio a coche eléctrico</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f3ec;
+        --surface: #fffaf2;
+        --surface-strong: #ffffff;
+        --ink: #18201d;
+        --muted: #65716b;
+        --line: #ded7cc;
+        --green: #1f7a5a;
+        --green-soft: #e4f3e7;
+        --blue: #235f8f;
+        --blue-soft: #e3eef8;
+        --amber: #b76b18;
+        --amber-soft: #faead6;
+        --red: #9f372f;
+        --shadow: 0 18px 50px rgba(28, 33, 30, 0.09);
+        --radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        font-size: 16px;
+        line-height: 1.45;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .page {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 40px;
+      }
+
+      .app-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 20px;
+        align-items: end;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        margin: 0 0 6px;
+        color: var(--green);
+        font-size: 0.86rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 760px;
+        font-size: 2.2rem;
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .header-total {
+        min-width: 220px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface-strong);
+        box-shadow: var(--shadow);
+      }
+
+      .header-total span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .header-total strong {
+        display: block;
+        margin-top: 3px;
+        color: var(--green);
+        font-size: 1.55rem;
+        line-height: 1.15;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(330px, 0.95fr);
+        gap: 22px;
+        align-items: start;
+      }
+
+      .panel,
+      .result-panel {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .form-panel {
+        padding: 20px;
+      }
+
+      .form-section + .form-section {
+        margin-top: 24px;
+        padding-top: 22px;
+        border-top: 1px solid var(--line);
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 1.05rem;
+        letter-spacing: 0;
+      }
+
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .field {
+        display: grid;
+        gap: 7px;
+        min-width: 0;
+      }
+
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        color: var(--muted);
+        font-size: 0.88rem;
+        font-weight: 650;
+      }
+
+      input,
+      select,
+      button {
+        width: 100%;
+        min-height: 46px;
+        border: 1px solid #cfc7ba;
+        border-radius: var(--radius);
+        background: var(--surface-strong);
+        color: var(--ink);
+        font: inherit;
+        padding: 10px 12px;
+        outline: none;
+      }
+
+      input:focus,
+      select:focus,
+      button:focus {
+        border-color: var(--green);
+        box-shadow: 0 0 0 3px rgba(31, 122, 90, 0.14);
+      }
+
+      button {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        border-color: var(--green);
+        background: var(--green);
+        color: #ffffff;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      button:hover:not(:disabled) {
+        background: #176547;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.62;
+      }
+
+      button.secondary {
+        border-color: var(--blue);
+        background: var(--blue);
+      }
+
+      button.secondary:hover:not(:disabled) {
+        background: #1b4f78;
+      }
+
+      .input-with-unit {
+        position: relative;
+      }
+
+      .input-with-unit input {
+        padding-right: 72px;
+      }
+
+      .input-with-unit .unit {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        translate: 0 -50%;
+        color: var(--muted);
+        font-size: 0.84rem;
+        pointer-events: none;
+      }
+
+      .saved-config-panel {
+        display: grid;
+        gap: 14px;
+        margin-bottom: 22px;
+        padding: 18px;
+      }
+
+      .saved-config-panel h2 {
+        margin-bottom: 0;
+      }
+
+      .saved-config-grid {
+        display: grid;
+        grid-template-columns: minmax(180px, 0.8fr) minmax(240px, 1.2fr) auto;
+        gap: 14px;
+        align-items: end;
+      }
+
+      .saved-config-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(110px, 1fr));
+        gap: 10px;
+      }
+
+      .save-status {
+        min-height: 20px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.86rem;
+        font-weight: 650;
+      }
+
+      .save-status.success {
+        color: var(--green);
+      }
+
+      .save-status.error {
+        color: var(--red);
+      }
+
+      .aside {
+        position: sticky;
+        top: 16px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .result-panel {
+        overflow: hidden;
+      }
+
+      .result-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        padding: 17px 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface-strong);
+      }
+
+      .result-header h2 {
+        margin: 0;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: var(--green-soft);
+        color: var(--green);
+        font-size: 0.82rem;
+        font-weight: 750;
+        white-space: nowrap;
+      }
+
+      .results-grid {
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+      }
+
+      .metric {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface-strong);
+      }
+
+      .metric.featured {
+        border-color: rgba(31, 122, 90, 0.4);
+        background: var(--green-soft);
+      }
+
+      .metric.finance {
+        border-color: rgba(35, 95, 143, 0.32);
+        background: var(--blue-soft);
+      }
+
+      .metric.warning {
+        border-color: rgba(183, 107, 24, 0.32);
+        background: var(--amber-soft);
+      }
+
+      .metric-label {
+        color: var(--muted);
+        font-size: 0.84rem;
+        font-weight: 700;
+      }
+
+      .metric-value {
+        display: block;
+        overflow-wrap: anywhere;
+        font-size: 1.28rem;
+        font-weight: 820;
+        line-height: 1.16;
+      }
+
+      .metric-value.positive {
+        color: var(--green);
+      }
+
+      .metric-value.negative {
+        color: var(--red);
+      }
+
+      .metric small {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .market-note,
+      .footnote {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface-strong);
+        color: var(--muted);
+        font-size: 0.87rem;
+      }
+
+      .market-note {
+        padding: 15px 16px;
+      }
+
+      .market-note strong {
+        color: var(--ink);
+      }
+
+      .market-note p {
+        margin: 0;
+      }
+
+      .footnote {
+        margin-top: 22px;
+        padding: 14px 16px;
+      }
+
+      .footnote p {
+        margin: 0;
+      }
+
+      .sources {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        margin-top: 10px;
+      }
+
+      .sources a {
+        color: var(--blue);
+        font-weight: 700;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      @media (max-width: 920px) {
+        .app-header,
+        .layout,
+        .saved-config-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .header-total {
+          min-width: 0;
+        }
+
+        .aside {
+          position: static;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .page {
+          width: min(100% - 20px, 1180px);
+          padding-top: 18px;
+        }
+
+        h1 {
+          font-size: 1.7rem;
+        }
+
+        .form-panel {
+          padding: 16px;
+        }
+
+        .fields {
+          grid-template-columns: 1fr;
+        }
+
+        .saved-config-panel {
+          padding: 16px;
+        }
+
+        .saved-config-actions {
+          grid-template-columns: 1fr;
+        }
+
+        .result-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .chip {
+          white-space: normal;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Eléctrico</p>
+          <h1>Calculadora de cambio de combustión a coche eléctrico</h1>
+        </div>
+        <div class="header-total" aria-live="polite">
+          <span>Ahorro mensual estimado</span>
+          <strong id="headerMonthlySaving">0 €</strong>
+        </div>
+      </header>
+
+      <section class="panel saved-config-panel" aria-label="Configuraciones guardadas">
+        <h2>Configuraciones guardadas</h2>
+        <div class="saved-config-grid">
+          <div class="field">
+            <label for="configurationLabel">Etiqueta</label>
+            <input id="configurationLabel" autocomplete="off" maxlength="80" placeholder="Ej. Tesla Model 3 diario">
+          </div>
+          <div class="field">
+            <label for="savedConfigurations">Configuración</label>
+            <select id="savedConfigurations">
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+          <div class="saved-config-actions">
+            <button id="saveConfiguration" type="button">Guardar</button>
+            <button id="loadConfiguration" class="secondary" type="button">Cargar</button>
+          </div>
+        </div>
+        <p class="save-status" id="configurationStatus" role="status" aria-live="polite"></p>
+      </section>
+
+      <div class="layout">
+        <section class="panel form-panel" aria-label="Datos de entrada">
+          <div class="form-section">
+            <h2>Kilómetros</h2>
+            <div class="fields">
+              <div class="field full">
+                <label for="annualKm">Kms recorridos estimados anuales</label>
+                <div class="input-with-unit">
+                  <input id="annualKm" inputmode="decimal" autocomplete="off" value="20000">
+                  <span class="unit">km/año</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h2>Coche de combustión</h2>
+            <div class="fields">
+              <div class="field">
+                <label for="fuelConsumption">Consumo medio estimado</label>
+                <div class="input-with-unit">
+                  <input id="fuelConsumption" inputmode="decimal" autocomplete="off" value="5,5">
+                  <span class="unit">l/100 km</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="fuelType">Tipo de combustible</label>
+                <select id="fuelType">
+                  <option value="diesel" selected>Diésel</option>
+                  <option value="gasolina">Gasolina</option>
+                  <option value="hibrido">Híbrido</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="fuelPrice">Precio medio del litro</label>
+                <div class="input-with-unit">
+                  <input id="fuelPrice" inputmode="decimal" autocomplete="off" value="1,75">
+                  <span class="unit">€/l</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="combustionMaintenance">Mantenimiento anual</label>
+                <div class="input-with-unit">
+                  <input id="combustionMaintenance" inputmode="decimal" autocomplete="off" value="200">
+                  <span class="unit">€/año</span>
+                </div>
+              </div>
+              <div class="field full">
+                <label for="combustionRepairs">Reparaciones media anual</label>
+                <div class="input-with-unit">
+                  <input id="combustionRepairs" inputmode="decimal" autocomplete="off" value="500">
+                  <span class="unit">€/año</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h2>Coche eléctrico</h2>
+            <div class="fields">
+              <div class="field">
+                <label for="electricityPrice">Precio medio del kWh</label>
+                <div class="input-with-unit">
+                  <input id="electricityPrice" inputmode="decimal" autocomplete="off" value="0,15">
+                  <span class="unit">€/kWh</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="electricConsumption">Consumo coche eléctrico</label>
+                <div class="input-with-unit">
+                  <input id="electricConsumption" inputmode="decimal" autocomplete="off" value="14">
+                  <span class="unit">kWh/100 km</span>
+                </div>
+              </div>
+              <div class="field full">
+                <label for="electricMaintenance">Mantenimiento anual</label>
+                <div class="input-with-unit">
+                  <input id="electricMaintenance" inputmode="decimal" autocomplete="off" value="100">
+                  <span class="unit">€/año</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h2>Compra y venta</h2>
+            <div class="fields">
+              <div class="field">
+                <label for="salePrice">Precio de venta coche combustión</label>
+                <div class="input-with-unit">
+                  <input id="salePrice" inputmode="decimal" autocomplete="off" value="10000">
+                  <span class="unit">€</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="electricPurchasePrice">Precio compra eléctrico sin ayudas</label>
+                <div class="input-with-unit">
+                  <input id="electricPurchasePrice" inputmode="decimal" autocomplete="off" value="40000">
+                  <span class="unit">€</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="movesAid">Ayuda Plan MOVES (ahorro directo)</label>
+                <div class="input-with-unit">
+                  <input id="movesAid" inputmode="decimal" autocomplete="off" value="4000">
+                  <span class="unit">€</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="irpfAid">Ayuda IRPF (ahorro tras 1 año)</label>
+                <div class="input-with-unit">
+                  <input id="irpfAid" inputmode="decimal" autocomplete="off" value="3000">
+                  <span class="unit">€</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="caeAid">Ayuda CAE (ahorro directo)</label>
+                <div class="input-with-unit">
+                  <input id="caeAid" inputmode="decimal" autocomplete="off" value="1000">
+                  <span class="unit">€</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="scrapAid">Ayuda cambio coche (ahorro directo)</label>
+                <div class="input-with-unit">
+                  <input id="scrapAid" inputmode="decimal" autocomplete="off" value="1000">
+                  <span class="unit">€</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="downPayment">Pago inicial</label>
+                <div class="input-with-unit">
+                  <input id="downPayment" inputmode="decimal" autocomplete="off" value="8000">
+                  <span class="unit">€</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="installments">Cuotas a pagar</label>
+                <div class="input-with-unit">
+                  <input id="installments" inputmode="numeric" autocomplete="off" value="48">
+                  <span class="unit">meses</span>
+                </div>
+              </div>
+              <div class="field full">
+                <label for="apr">TAE estimado financiación</label>
+                <div class="input-with-unit">
+                  <input id="apr" inputmode="decimal" autocomplete="off" value="7,5">
+                  <span class="unit">% TAE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="aside" aria-label="Resultados">
+          <section class="result-panel" aria-live="polite">
+            <div class="result-header">
+              <h2>Resultados</h2>
+              <span class="chip" id="fuelTypeChip">Diésel</span>
+            </div>
+            <div class="results-grid">
+              <article class="metric">
+                <span class="metric-label">Gasto anual en combustible</span>
+                <strong class="metric-value" id="annualFuelCost">0 €</strong>
+              </article>
+              <article class="metric">
+                <span class="metric-label">Gasto anual en electricidad</span>
+                <strong class="metric-value" id="annualElectricCost">0 €</strong>
+              </article>
+              <article class="metric featured">
+                <span class="metric-label">Ahorro anual en combustible</span>
+                <strong class="metric-value positive" id="annualFuelSaving">0 €</strong>
+              </article>
+              <article class="metric featured">
+                <span class="metric-label">Ahorro anual en mantenimiento y reparaciones</span>
+                <strong class="metric-value positive" id="annualMaintenanceSaving">0 €</strong>
+              </article>
+              <article class="metric featured">
+                <span class="metric-label">Ahorro anual total</span>
+                <strong class="metric-value positive" id="annualTotalSaving">0 €</strong>
+              </article>
+              <article class="metric featured">
+                <span class="metric-label">Ahorro mensual total</span>
+                <strong class="metric-value positive" id="monthlyTotalSaving">0 €</strong>
+              </article>
+              <article class="metric finance">
+                <span class="metric-label">Coste neto tras venta y ayudas</span>
+                <strong class="metric-value" id="netPayment">0 €</strong>
+                <small>Compra - venta - ayudas directas</small>
+              </article>
+              <article class="metric finance">
+                <span class="metric-label">Importe a financiar tras entrada</span>
+                <strong class="metric-value" id="financedAmount">0 €</strong>
+              </article>
+              <article class="metric warning">
+                <span class="metric-label">Cuota mensual estimada</span>
+                <strong class="metric-value" id="monthlyInstallment">0 €</strong>
+                <small id="monthlyInstallmentNote">TAE 7,5% · 48 cuotas</small>
+              </article>
+              <article class="metric warning">
+                <span class="metric-label">Cuota neta restando ahorro mensual</span>
+                <strong class="metric-value" id="realMonthlyInstallment">0 €</strong>
+              </article>
+              <article class="metric warning">
+                <span class="metric-label">Cuota neta restando ahorro mensual tras 1 año</span>
+                <strong class="metric-value" id="realMonthlyInstallmentAfterYear">0 €</strong>
+                <small>Con Ayuda IRPF aplicada a préstamo tras 12 cuotas</small>
+              </article>
+              <article class="metric finance">
+                <span class="metric-label">Años para amortizar el eléctrico</span>
+                <strong class="metric-value" id="electricPaybackYears">0 años</strong>
+                <small>Coste neto total / ahorro anual total</small>
+              </article>
+            </div>
+          </section>
+
+          <section class="market-note">
+            <p>
+              <strong>TAE orientativo:</strong>
+              7,5% por defecto. Referencias recientes sitúan préstamos verdes para vehículo
+              cerca del 6,64% TAE y préstamos al consumo a más de 5 años alrededor del 7,46%.
+              En ofertas de mercado hay rangos aproximados desde el 5,30% hasta más del 12%,
+              según entidad, importe, plazo y vinculaciones.
+            </p>
+          </section>
+        </aside>
+      </div>
+
+      <footer class="footnote">
+        <p>
+          Cálculo orientativo: no incluye seguro, impuestos, instalación de punto de carga,
+          comisiones de apertura, valor residual ni posibles cambios normativos o fiscales.
+        </p>
+        <div class="sources" aria-label="Fuentes de financiación consultadas">
+          <a href="https://clientebancario.bde.es/pcb/es/menu-horizontal/productosservici/financiacion/prestamopersonal/guia-textual/tiposprestamospe/El_credito_al_consumo.html" target="_blank" rel="noreferrer">Banco de España</a>
+          <a href="https://www.asufin.com/wp-content/uploads/2026/01/251001_VI_ESTUDIO_FINANZAS_VERDES_SEPTIEMBRE_2025-1.pdf" target="_blank" rel="noreferrer">ASUFIN Finanzas Verdes</a>
+          <a href="https://www.ibercaja.es/particulares/prestamos/prestamo-ecocero/" target="_blank" rel="noreferrer">Ibercaja ECO/CERO</a>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      const ids = [
+        "annualKm",
+        "fuelConsumption",
+        "fuelPrice",
+        "combustionMaintenance",
+        "combustionRepairs",
+        "electricityPrice",
+        "electricConsumption",
+        "electricMaintenance",
+        "salePrice",
+        "electricPurchasePrice",
+        "movesAid",
+        "irpfAid",
+        "caeAid",
+        "scrapAid",
+        "downPayment",
+        "installments",
+        "apr",
+      ];
+
+      const configurationFieldIds = [...ids, "fuelType"];
+      const configurationsEndpoint = "api/configurations.php";
+      let savedConfigurations = [];
+
+      const fuelLabels = {
+        diesel: "Diésel",
+        gasolina: "Gasolina",
+        hibrido: "Híbrido",
+        otro: "Otro",
+      };
+
+      const euroFormatter = new Intl.NumberFormat("es-ES", {
+        style: "currency",
+        currency: "EUR",
+        maximumFractionDigits: 0,
+      });
+
+      const euroMonthlyFormatter = new Intl.NumberFormat("es-ES", {
+        style: "currency",
+        currency: "EUR",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+      const percentFormatter = new Intl.NumberFormat("es-ES", {
+        maximumFractionDigits: 2,
+      });
+
+      const yearsFormatter = new Intl.NumberFormat("es-ES", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      });
+
+      function el(id) {
+        return document.getElementById(id);
+      }
+
+      function parseNumber(value) {
+        if (typeof value !== "string") {
+          return 0;
+        }
+
+        const normalized = value
+          .trim()
+          .replace(/\s/g, "")
+          .replace(/[€%]/g, "")
+          .replace(/\.(?=\d{3}(\D|$))/g, "")
+          .replace(",", ".");
+
+        const parsed = Number.parseFloat(normalized);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function value(id) {
+        return parseNumber(el(id).value);
+      }
+
+      function money(amount, decimals = 0) {
+        return decimals === 0
+          ? euroFormatter.format(amount)
+          : euroMonthlyFormatter.format(amount);
+      }
+
+      function setMoney(id, amount, decimals = 0) {
+        const node = el(id);
+        node.textContent = money(amount, decimals);
+        node.classList.toggle("negative", amount < 0);
+        node.classList.toggle("positive", amount >= 0);
+      }
+
+      function setYears(id, years) {
+        const node = el(id);
+
+        if (!Number.isFinite(years)) {
+          node.textContent = "No se amortiza";
+          node.classList.add("negative");
+          node.classList.remove("positive");
+          return;
+        }
+
+        if (years <= 0) {
+          node.textContent = "Amortizado";
+        } else {
+          node.textContent = `${yearsFormatter.format(years)} años`;
+        }
+
+        node.classList.add("positive");
+        node.classList.remove("negative");
+      }
+
+      function monthlyPayment(principal, annualApr, months) {
+        if (principal <= 0 || months <= 0) {
+          return 0;
+        }
+
+        const monthlyRate = Math.pow(1 + annualApr / 100, 1 / 12) - 1;
+        if (monthlyRate <= 0) {
+          return principal / months;
+        }
+
+        return principal * monthlyRate / (1 - Math.pow(1 + monthlyRate, -months));
+      }
+
+      function remainingPrincipalAfterPayments(principal, annualApr, monthlyInstallment, paidMonths) {
+        if (principal <= 0) {
+          return 0;
+        }
+
+        if (paidMonths <= 0 || monthlyInstallment <= 0) {
+          return principal;
+        }
+
+        const monthlyRate = Math.pow(1 + annualApr / 100, 1 / 12) - 1;
+        if (monthlyRate <= 0) {
+          return Math.max(principal - monthlyInstallment * paidMonths, 0);
+        }
+
+        const growth = Math.pow(1 + monthlyRate, paidMonths);
+        return Math.max(
+          principal * growth - monthlyInstallment * ((growth - 1) / monthlyRate),
+          0,
+        );
+      }
+
+      function currentConfiguration() {
+        return configurationFieldIds.reduce((configuration, id) => {
+          configuration[id] = el(id).value;
+          return configuration;
+        }, {});
+      }
+
+      function applyConfiguration(configuration) {
+        configurationFieldIds.forEach((id) => {
+          if (Object.prototype.hasOwnProperty.call(configuration, id)) {
+            el(id).value = configuration[id];
+          }
+        });
+
+        calculate();
+      }
+
+      function setConfigurationStatus(message, type = "") {
+        const status = el("configurationStatus");
+        status.textContent = message;
+        status.classList.toggle("success", type === "success");
+        status.classList.toggle("error", type === "error");
+      }
+
+      function setConfigurationControlsDisabled(disabled) {
+        el("saveConfiguration").disabled = disabled;
+        el("loadConfiguration").disabled = disabled || savedConfigurations.length === 0;
+        el("savedConfigurations").disabled = disabled || savedConfigurations.length === 0;
+      }
+
+      function formatSavedConfigurationDate(dateValue) {
+        const date = new Date(dateValue);
+
+        if (Number.isNaN(date.getTime())) {
+          return "fecha no disponible";
+        }
+
+        return new Intl.DateTimeFormat("es-ES", {
+          dateStyle: "short",
+          timeStyle: "short",
+        }).format(date);
+      }
+
+      function renderSavedConfigurations(selectedId = "") {
+        const select = el("savedConfigurations");
+        select.replaceChildren();
+
+        if (savedConfigurations.length === 0) {
+          select.add(new Option("Sin configuraciones guardadas", ""));
+          setConfigurationControlsDisabled(false);
+          return;
+        }
+
+        savedConfigurations.forEach((configuration) => {
+          const label = `${configuration.label} · ${formatSavedConfigurationDate(configuration.createdAt)}`;
+          select.add(new Option(label, configuration.id));
+        });
+
+        if (selectedId) {
+          select.value = selectedId;
+        }
+
+        setConfigurationControlsDisabled(false);
+      }
+
+      async function fetchJson(url, options = {}) {
+        const response = await fetch(url, {
+          cache: "no-store",
+          headers: {
+            Accept: "application/json",
+            ...(options.body ? { "Content-Type": "application/json" } : {}),
+          },
+          ...options,
+        });
+
+        let payload = null;
+        try {
+          payload = await response.json();
+        } catch {
+          payload = null;
+        }
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "No se pudo completar la operación.");
+        }
+
+        return payload;
+      }
+
+      async function refreshSavedConfigurations(selectedId = "") {
+        try {
+          setConfigurationControlsDisabled(true);
+          savedConfigurations = await fetchJson(configurationsEndpoint);
+          renderSavedConfigurations(selectedId);
+        } catch (error) {
+          savedConfigurations = [];
+          renderSavedConfigurations();
+          setConfigurationStatus(error.message, "error");
+        }
+      }
+
+      async function saveCurrentConfiguration() {
+        const label = el("configurationLabel").value.trim();
+
+        if (!label) {
+          setConfigurationStatus("Escribe una etiqueta antes de guardar.", "error");
+          el("configurationLabel").focus();
+          return;
+        }
+
+        try {
+          setConfigurationControlsDisabled(true);
+          const payload = await fetchJson(configurationsEndpoint, {
+            method: "POST",
+            body: JSON.stringify({
+              label,
+              configuration: currentConfiguration(),
+            }),
+          });
+
+          el("configurationLabel").value = "";
+          await refreshSavedConfigurations(payload.configuration.id);
+          setConfigurationStatus("Configuración guardada.", "success");
+        } catch (error) {
+          setConfigurationControlsDisabled(false);
+          setConfigurationStatus(error.message, "error");
+        }
+      }
+
+      async function loadSelectedConfiguration() {
+        const id = el("savedConfigurations").value;
+
+        if (!id) {
+          setConfigurationStatus("Selecciona una configuración para cargar.", "error");
+          return;
+        }
+
+        try {
+          setConfigurationControlsDisabled(true);
+          const payload = await fetchJson(`${configurationsEndpoint}?id=${encodeURIComponent(id)}`);
+          applyConfiguration(payload.configuration.values);
+          el("configurationLabel").value = payload.configuration.label;
+          setConfigurationStatus("Configuración cargada.", "success");
+        } catch (error) {
+          setConfigurationStatus(error.message, "error");
+        } finally {
+          setConfigurationControlsDisabled(false);
+        }
+      }
+
+      function calculate() {
+        const annualKm = value("annualKm");
+        const annualFuelCost = annualKm / 100 * value("fuelConsumption") * value("fuelPrice");
+        const annualElectricCost = annualKm / 100 * value("electricConsumption") * value("electricityPrice");
+
+        const annualFuelSaving = annualFuelCost - annualElectricCost;
+        const annualMaintenanceSaving =
+          value("combustionMaintenance") + value("combustionRepairs") - value("electricMaintenance");
+        const annualTotalSaving = annualFuelSaving + annualMaintenanceSaving;
+        const monthlyTotalSaving = annualTotalSaving / 12;
+
+        const immediateAids = value("movesAid") + value("caeAid") + value("scrapAid");
+        const irpfAid = value("irpfAid");
+        const netPayment = value("electricPurchasePrice") - value("salePrice") - immediateAids;
+        const financedAmount = Math.max(netPayment - value("downPayment"), 0);
+        const installments = Math.max(Math.round(value("installments")), 0);
+        const apr = value("apr");
+        const monthlyInstallment = monthlyPayment(financedAmount, apr, installments);
+        const realMonthlyInstallment = monthlyInstallment - monthlyTotalSaving;
+        const paidInstallmentsAfterYear = Math.min(installments, 12);
+        const remainingInstallmentsAfterYear = Math.max(installments - paidInstallmentsAfterYear, 0);
+        const pendingAfterYear = remainingPrincipalAfterPayments(
+          financedAmount,
+          apr,
+          monthlyInstallment,
+          paidInstallmentsAfterYear,
+        );
+        const financedAfterIrpfAmortization = Math.max(pendingAfterYear - irpfAid, 0);
+        const monthlyInstallmentAfterYear = monthlyPayment(
+          financedAfterIrpfAmortization,
+          apr,
+          remainingInstallmentsAfterYear,
+        );
+        const realMonthlyInstallmentAfterYear = monthlyInstallmentAfterYear - monthlyTotalSaving;
+        const electricPurchaseCostToPayBack = Math.max(netPayment - irpfAid, 0);
+        const electricPaybackYears =
+          annualTotalSaving > 0 ? electricPurchaseCostToPayBack / annualTotalSaving : Number.NaN;
+
+        el("fuelTypeChip").textContent = fuelLabels[el("fuelType").value] || "Combustible";
+        setMoney("annualFuelCost", annualFuelCost);
+        setMoney("annualElectricCost", annualElectricCost);
+        setMoney("annualFuelSaving", annualFuelSaving);
+        setMoney("annualMaintenanceSaving", annualMaintenanceSaving);
+        setMoney("annualTotalSaving", annualTotalSaving);
+        setMoney("monthlyTotalSaving", monthlyTotalSaving, 2);
+        setMoney("headerMonthlySaving", monthlyTotalSaving, 2);
+        setMoney("netPayment", netPayment);
+        setMoney("financedAmount", financedAmount);
+        setMoney("monthlyInstallment", monthlyInstallment, 2);
+        setMoney("realMonthlyInstallment", realMonthlyInstallment, 2);
+        setMoney("realMonthlyInstallmentAfterYear", realMonthlyInstallmentAfterYear, 2);
+        setYears("electricPaybackYears", electricPaybackYears);
+
+        el("monthlyInstallmentNote").textContent =
+          `TAE ${percentFormatter.format(apr)}% · ${installments} cuotas`;
+      }
+
+      ids.forEach((id) => {
+        el(id).addEventListener("input", calculate);
+      });
+
+      el("fuelType").addEventListener("change", calculate);
+      el("saveConfiguration").addEventListener("click", saveCurrentConfiguration);
+      el("loadConfiguration").addEventListener("click", loadSelectedConfiguration);
+      calculate();
+      refreshSavedConfigurations();
+    </script>
+  </body>
+</html>
