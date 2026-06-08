@@ -550,7 +550,7 @@
               <div class="field">
                 <label for="electricityPrice">Precio medio del kWh</label>
                 <div class="input-with-unit">
-                  <input id="electricityPrice" inputmode="decimal" autocomplete="off" value="0,15">
+                  <input id="electricityPrice" inputmode="decimal" autocomplete="off" value="0,05">
                   <span class="unit">€/kWh</span>
                 </div>
               </div>
@@ -577,7 +577,7 @@
               <div class="field">
                 <label for="salePrice">Precio de venta coche combustión</label>
                 <div class="input-with-unit">
-                  <input id="salePrice" inputmode="decimal" autocomplete="off" value="10000">
+                  <input id="salePrice" inputmode="decimal" autocomplete="off" value="7500">
                   <span class="unit">€</span>
                 </div>
               </div>
@@ -651,35 +651,42 @@
               <article class="metric">
                 <span class="metric-label">Gasto anual en combustible</span>
                 <strong class="metric-value" id="annualFuelCost">0 €</strong>
+                <small id="annualFuelCostNote"></small>
               </article>
               <article class="metric">
                 <span class="metric-label">Gasto anual en electricidad</span>
                 <strong class="metric-value" id="annualElectricCost">0 €</strong>
+                <small id="annualElectricCostNote"></small>
               </article>
               <article class="metric featured">
                 <span class="metric-label">Ahorro anual en combustible</span>
                 <strong class="metric-value positive" id="annualFuelSaving">0 €</strong>
+                <small id="annualFuelSavingNote"></small>
               </article>
               <article class="metric featured">
                 <span class="metric-label">Ahorro anual en mantenimiento y reparaciones</span>
                 <strong class="metric-value positive" id="annualMaintenanceSaving">0 €</strong>
+                <small id="annualMaintenanceSavingNote"></small>
               </article>
               <article class="metric featured">
                 <span class="metric-label">Ahorro anual total</span>
                 <strong class="metric-value positive" id="annualTotalSaving">0 €</strong>
+                <small id="annualTotalSavingNote"></small>
               </article>
               <article class="metric featured">
                 <span class="metric-label">Ahorro mensual total</span>
                 <strong class="metric-value positive" id="monthlyTotalSaving">0 €</strong>
+                <small id="monthlyTotalSavingNote"></small>
               </article>
               <article class="metric finance">
-                <span class="metric-label">Coste neto tras venta y ayudas</span>
+                <span class="metric-label">Coste neto tras venta y ayudas (solamente a título informativo)</span>
                 <strong class="metric-value" id="netPayment">0 €</strong>
-                <small>Compra - venta - ayudas directas</small>
+                <small id="netPaymentNote"></small>
               </article>
               <article class="metric finance">
                 <span class="metric-label">Importe a financiar tras entrada</span>
                 <strong class="metric-value" id="financedAmount">0 €</strong>
+                <small id="financedAmountNote"></small>
               </article>
               <article class="metric warning">
                 <span class="metric-label">Cuota mensual estimada</span>
@@ -689,11 +696,12 @@
               <article class="metric warning">
                 <span class="metric-label">Cuota neta restando ahorro mensual</span>
                 <strong class="metric-value" id="realMonthlyInstallment">0 €</strong>
+                <small id="realMonthlyInstallmentNote"></small>
               </article>
               <article class="metric warning">
                 <span class="metric-label">Cuota neta restando ahorro mensual tras 1 año</span>
                 <strong class="metric-value" id="realMonthlyInstallmentAfterYear">0 €</strong>
-                <small>Con Ayuda IRPF aplicada a préstamo tras 12 cuotas</small>
+                <small>Con Ayuda IRPF y Plan MOVES aplicados a préstamo tras 12 cuotas</small>
               </article>
               <article class="metric finance">
                 <span class="metric-label">Años para amortizar el eléctrico</span>
@@ -962,11 +970,20 @@
         return payload;
       }
 
-      async function refreshSavedConfigurations(selectedId = "") {
+      async function refreshSavedConfigurations(selectedId = "", autoLoad = false) {
         try {
           setConfigurationControlsDisabled(true);
           savedConfigurations = await fetchJson(configurationsEndpoint);
-          renderSavedConfigurations(selectedId);
+          if (autoLoad && savedConfigurations.length > 0) {
+            const id = savedConfigurations[0].id;
+            const payload = await fetchJson(`${configurationsEndpoint}?id=${encodeURIComponent(id)}`);
+            applyConfiguration(payload.configuration.values);
+            el("configurationLabel").value = payload.configuration.label;
+            renderSavedConfigurations(id);
+            calculate();
+          } else {
+            renderSavedConfigurations(selectedId);
+          }
         } catch (error) {
           savedConfigurations = [];
           renderSavedConfigurations();
@@ -1036,8 +1053,8 @@
 
         const immediateAids = value("movesAid") + value("caeAid") + value("scrapAid");
         const irpfAid = value("irpfAid");
-        const netPayment = value("electricPurchasePrice") - value("salePrice") - immediateAids;
-        const financedAmount = Math.max(netPayment - value("downPayment"), 0);
+        const netPayment = value("electricPurchasePrice") - immediateAids - irpfAid;
+        const financedAmount = Math.max(value("electricPurchasePrice") - value("downPayment") - value("salePrice") - value("caeAid") - value("scrapAid"), 0);
         const installments = Math.max(Math.round(value("installments")), 0);
         const apr = value("apr");
         const monthlyInstallment = monthlyPayment(financedAmount, apr, installments);
@@ -1050,14 +1067,14 @@
           monthlyInstallment,
           paidInstallmentsAfterYear,
         );
-        const financedAfterIrpfAmortization = Math.max(pendingAfterYear - irpfAid, 0);
+        const financedAfterIrpfAmortization = Math.max(pendingAfterYear - irpfAid - value("movesAid"), 0);
         const monthlyInstallmentAfterYear = monthlyPayment(
           financedAfterIrpfAmortization,
           apr,
           remainingInstallmentsAfterYear,
         );
         const realMonthlyInstallmentAfterYear = monthlyInstallmentAfterYear - monthlyTotalSaving;
-        const electricPurchaseCostToPayBack = Math.max(netPayment - irpfAid, 0);
+        const electricPurchaseCostToPayBack = Math.max(netPayment, 0);
         const electricPaybackYears =
           annualTotalSaving > 0 ? electricPurchaseCostToPayBack / annualTotalSaving : Number.NaN;
 
@@ -1076,8 +1093,26 @@
         setMoney("realMonthlyInstallmentAfterYear", realMonthlyInstallmentAfterYear, 2);
         setYears("electricPaybackYears", electricPaybackYears);
 
+        el("annualFuelCostNote").textContent =
+          `${percentFormatter.format(annualKm)} km × ${percentFormatter.format(value("fuelConsumption"))} l/100km × ${percentFormatter.format(value("fuelPrice"))} €/l`;
+        el("annualElectricCostNote").textContent =
+          `${percentFormatter.format(annualKm)} km × ${percentFormatter.format(value("electricConsumption"))} kWh/100km × ${percentFormatter.format(value("electricityPrice"))} €/kWh`;
+        el("annualFuelSavingNote").textContent =
+          `${money(annualFuelCost)} combustible − ${money(annualElectricCost)} electricidad`;
+        el("annualMaintenanceSavingNote").textContent =
+          `${money(value("combustionMaintenance") + value("combustionRepairs"))} combustión − ${money(value("electricMaintenance"))} eléctrico`;
+        el("annualTotalSavingNote").textContent =
+          `${money(annualFuelSaving)} combustible + ${money(annualMaintenanceSaving)} mantenimiento`;
+        el("monthlyTotalSavingNote").textContent =
+          `${money(annualTotalSaving)} ÷ 12 meses`;
+        el("netPaymentNote").textContent =
+          `${money(value("electricPurchasePrice"))} compra − ${money(value("movesAid"))} MOVES − ${money(irpfAid)} IRPF − ${money(value("caeAid"))} CAE − ${money(value("scrapAid"))} cambio coche`;
+        el("financedAmountNote").textContent =
+          `${money(value("electricPurchasePrice"))} precio compra − ${money(value("downPayment"))} entrada − ${money(value("salePrice"))} venta combustión − ${money(value("caeAid"))} CAE − ${money(value("scrapAid"))} cambio coche`;
         el("monthlyInstallmentNote").textContent =
-          `TAE ${percentFormatter.format(apr)}% · ${installments} cuotas`;
+          `TAE ${percentFormatter.format(apr)}% · ${installments} cuotas · ${money(financedAmount)} financiados`;
+        el("realMonthlyInstallmentNote").textContent =
+          `${money(monthlyInstallment, 2)} cuota − ${money(monthlyTotalSaving, 2)} ahorro mensual`;
       }
 
       ids.forEach((id) => {
@@ -1088,7 +1123,7 @@
       el("saveConfiguration").addEventListener("click", saveCurrentConfiguration);
       el("loadConfiguration").addEventListener("click", loadSelectedConfiguration);
       calculate();
-      refreshSavedConfigurations();
+      refreshSavedConfigurations("", true);
     </script>
   </body>
 </html>
